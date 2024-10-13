@@ -5,6 +5,9 @@ require('dotenv').config();
 const connectDB = async () => {
     const client = new Client({
         connectionString: process.env.DATABASE_URL,
+        ssl: {
+            rejectUnauthorized: false, // Set to true if you have a proper SSL certificate
+        }
     });
 
     try {
@@ -23,8 +26,10 @@ const connectDB = async () => {
         `);
         console.log('Tasks table checked/created');
     } catch (err) {
-        console.error(err);
+        console.error('Database connection error:', err);
         process.exit(1);
+    } finally {
+        await client.end(); // Ensure the client is disconnected after use
     }
 };
 
