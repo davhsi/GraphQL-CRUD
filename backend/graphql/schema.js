@@ -1,85 +1,32 @@
-const { GraphQLObjectType, GraphQLSchema, GraphQLString, GraphQLInt, GraphQLBoolean, GraphQLList, GraphQLNonNull } = require('graphql');
-const Task = require('../models/taskModel');
+const { GraphQLSchema, GraphQLObjectType } = require('graphql');
+const userResolvers = require('./resolvers/userResolvers');
+const taskResolvers = require('./resolvers/taskResolvers');
 
-const TaskType = new GraphQLObjectType({
-    name: 'Task',
-    fields: () => ({
-        id: { type: GraphQLInt },
-        name: { type: GraphQLString },
-        description: { type: GraphQLString },
-        deadline: { type: GraphQLString },
-        completed: { type: GraphQLBoolean },
-        userId: { type: GraphQLInt }, 
-    }),
-});
-
-
+// Combine user and task queries into a single RootQuery
 const RootQuery = new GraphQLObjectType({
-    name: 'RootQueryType',
-    fields: {
-        tasks: {
-            type: new GraphQLList(TaskType),
-            resolve: async (_, __, context) => {
-                const userId = context.user.id; // Access user ID from context
-                return await Task.getTasksByUser(userId); // Fetch tasks for the authenticated user
-            },
-        },
-    },
+  name: 'RootQuery',
+  fields: {
+    user: userResolvers.Query.user, // User query
+    tasks: taskResolvers.Query.tasks, // Task query
+  },
 });
 
-const Mutation = new GraphQLObjectType({
-    name: 'Mutation',
-    fields: {
-        createTask: {
-            type: TaskType,
-            args: {
-                name: { type: new GraphQLNonNull(GraphQLString) },
-                description: { type: GraphQLString },
-                deadline: { type: GraphQLString },
-            },
-            resolve: async (_, args, context) => {
-                const userId = context.user.id; // Access user ID from context
-                return await Task.createTask({ ...args, userId }); // Include userId when creating the task
-            },
-        },
-        updateTask: {
-            type: TaskType,
-            args: {
-                id: { type: new GraphQLNonNull(GraphQLInt) },
-                name: { type: GraphQLString },
-                description: { type: GraphQLString },
-                deadline: { type: GraphQLString },
-                completed: { type: GraphQLBoolean },
-            },
-            resolve: async (_, args, context) => {
-                const userId = context.user.id; // Access user ID from context
-                return await Task.updateTask(args.id, { ...args, userId }); // Only allow updates for user’s tasks
-            },
-        },
-        deleteTask: {
-            type: GraphQLString,
-            args: {
-                id: { type: new GraphQLNonNull(GraphQLInt) },
-            },
-            resolve: async (_, args, context) => {
-                const userId = context.user.id; // Access user ID from context
-                return await Task.deleteTask(args.id, userId); // Only allow deletion for user’s tasks
-            },
-        },
-        markAsCompleted: {
-            type: TaskType,
-            args: {
-                id: { type: new GraphQLNonNull(GraphQLInt) },
-            },
-            resolve: async (_, args, context) => {
-                const userId = context.user.id; // Access user ID from context
-                return await Task.markAsCompleted(args.id, userId); // Only mark as completed for user’s tasks
-            },
-        },
-    },
+// Combine user and task mutations into a single RootMutation
+const RootMutation = new GraphQLObjectType({
+  name: 'RootMutation',
+  fields: {
+    signup: userResolvers.Mutation.signup,
+    login: userResolvers.Mutation.login,
+    createTask: taskResolvers.Mutation.createTask,
+    updateTask: taskResolvers.Mutation.updateTask,
+    deleteTask: taskResolvers.Mutation.deleteTask,
+  },
 });
 
-module.exports = new GraphQLSchema({
-    query: RootQuery,
-    mutation: Mutation,
+// Define the schema with combined RootQuery and RootMutation
+const schema = new GraphQLSchema({
+  query: RootQuery,
+  mutation: RootMutation,
 });
+
+module.exports = schema;

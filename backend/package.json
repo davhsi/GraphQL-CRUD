@@ -1,12 +1,13 @@
 {
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "express-graphql": "^0.12.0",
     "graphql": "^15.9.0",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.13.0",
-    "sequelize": "^6.37.4"
+    "knex": "^3.1.0",
+    "pg": "^8.13.1"
   }
 }
