@@ -9,16 +9,19 @@ const TaskType = new GraphQLObjectType({
         description: { type: GraphQLString },
         deadline: { type: GraphQLString },
         completed: { type: GraphQLBoolean },
+        userId: { type: GraphQLInt }, 
     }),
 });
+
 
 const RootQuery = new GraphQLObjectType({
     name: 'RootQueryType',
     fields: {
         tasks: {
             type: new GraphQLList(TaskType),
-            resolve: async () => {
-                return await Task.getTasks();
+            resolve: async (_, __, context) => {
+                const userId = context.user.id; // Access user ID from context
+                return await Task.getTasksByUser(userId); // Fetch tasks for the authenticated user
             },
         },
     },
@@ -34,8 +37,9 @@ const Mutation = new GraphQLObjectType({
                 description: { type: GraphQLString },
                 deadline: { type: GraphQLString },
             },
-            resolve: async (parent, args) => {
-                return await Task.createTask(args);
+            resolve: async (_, args, context) => {
+                const userId = context.user.id; // Access user ID from context
+                return await Task.createTask({ ...args, userId }); // Include userId when creating the task
             },
         },
         updateTask: {
@@ -47,8 +51,9 @@ const Mutation = new GraphQLObjectType({
                 deadline: { type: GraphQLString },
                 completed: { type: GraphQLBoolean },
             },
-            resolve: async (parent, args) => {
-                return await Task.updateTask(args.id, args);
+            resolve: async (_, args, context) => {
+                const userId = context.user.id; // Access user ID from context
+                return await Task.updateTask(args.id, { ...args, userId }); // Only allow updates for user’s tasks
             },
         },
         deleteTask: {
@@ -56,8 +61,9 @@ const Mutation = new GraphQLObjectType({
             args: {
                 id: { type: new GraphQLNonNull(GraphQLInt) },
             },
-            resolve: async (parent, args) => {
-                return await Task.deleteTask(args.id);
+            resolve: async (_, args, context) => {
+                const userId = context.user.id; // Access user ID from context
+                return await Task.deleteTask(args.id, userId); // Only allow deletion for user’s tasks
             },
         },
         markAsCompleted: {
@@ -65,8 +71,9 @@ const Mutation = new GraphQLObjectType({
             args: {
                 id: { type: new GraphQLNonNull(GraphQLInt) },
             },
-            resolve: async (parent, args) => {
-                return await Task.markAsCompleted(args.id);
+            resolve: async (_, args, context) => {
+                const userId = context.user.id; // Access user ID from context
+                return await Task.markAsCompleted(args.id, userId); // Only mark as completed for user’s tasks
             },
         },
     },

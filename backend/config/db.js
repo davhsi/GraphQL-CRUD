@@ -1,4 +1,3 @@
-// config/db.js
 const { Client } = require('pg');
 require('dotenv').config();
 
@@ -14,6 +13,17 @@ const connectDB = async () => {
         await client.connect();
         console.log('PostgreSQL connected');
 
+        // Create the users table if it doesn't exist
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(255) NOT NULL UNIQUE,
+                email VARCHAR(255) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL
+            )
+        `);
+        console.log('Users table checked/created');
+
         // Create the tasks table if it doesn't exist
         await client.query(`
             CREATE TABLE IF NOT EXISTS tasks (
@@ -21,7 +31,8 @@ const connectDB = async () => {
                 name VARCHAR(255) NOT NULL,
                 description TEXT,
                 deadline TIMESTAMP,
-                completed BOOLEAN DEFAULT FALSE
+                completed BOOLEAN DEFAULT FALSE,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
             )
         `);
         console.log('Tasks table checked/created');
